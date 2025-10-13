@@ -2,15 +2,13 @@
 
 A full-stack Java application that transcribes audio from meetings and uses Google's Gemini AI to generate a summary of key decisions and action items.
 
-**Live Demo:** [Link to your deployed Render app will go here]
-
 ---
 
 ## ## Features
 
 - **Audio Upload:** A clean, modern UI for uploading audio files (MP3, WAV, etc.).
 - **AI Transcription:** Uses Google's powerful Cloud Speech-to-Text API to transcribe audio, with support for large files.
-- **AI Summarization:** Leverages the Gemini 1.5 Pro model to analyze the transcript and extract key decisions and action items.
+- **AI Summarization:** Leverages the Gemini AI model to analyze the transcript and extract key decisions and action items.
 - **RESTful API:** Built with a well-structured Spring Boot backend.
 
 ---
@@ -23,7 +21,6 @@ A full-stack Java application that transcribes audio from meetings and uses Goog
   - **Summarization:** Google Gemini API
 - **Database:** PostgreSQL (for deployment) / H2 (for local development)
 - **Build Tool:** Apache Maven
-- **Deployment:** Render, Git
 
 
 
