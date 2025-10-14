@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Summary</title>
+    <link rel="stylesheet" href="pages.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="history.html" class="back-link">&larr; Back to History</a>
+        <h1 id="summary-title">Loading Summary...</h1>
+        <div id="summary-content" class="summary-container"></div>
+    </div>
+
+    <script>
+    const backendOrigin = 'http://localhost:8080';
+    const baseUrl = (location.origin === backendOrigin) ? '' : backendOrigin;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const summaryTitle = document.getElementById('summary-title');
+            const summaryContentDiv = document.getElementById('summary-content');
+            
+            const params = new URLSearchParams(window.location.search);
+            const meetingId = params.get('id');
+
+            if (!meetingId) {
+                summaryTitle.textContent = "Error";
+                summaryContentDiv.innerHTML = '<p style="color: red;">No summary ID provided.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/meetings/${meetingId}`);
+                const meeting = await response.json();
+
+                summaryTitle.textContent = `Summary for: ${meeting.originalFileName}`;
+                summaryContentDiv.innerHTML = marked.parse(meeting.summary);
+
+            } catch (error) {
+                summaryTitle.textContent = "Error";
+                summaryContentDiv.innerHTML = '<p style="color: red;">Could not load summary.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

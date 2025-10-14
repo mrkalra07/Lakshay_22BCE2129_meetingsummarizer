@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #333;
+    margin: 0;
+    padding: 40px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    margin-top: 0;
+    color: #1a202c;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 15px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #4299e1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#history-list ul {
+    list-style: none;
+    padding: 0;
+}
+#history-list li a {
+    display: block;
+    padding: 15px;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: #2d3748;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+#history-list li a:hover {
+    background-color: #edf2f7;
+}
+
+.summary-container {
+    line-height: 1.7;
+}
+.summary-container h2 {
+    font-size: 20px;
+}
+/* Styling for Delete Buttons */
+#clear-all-btn {
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    margin-bottom: 20px;
+    background-color: #e53e3e; /* Red color */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+#clear-all-btn:hover {
+    background-color: #c53030;
+}
+
+.delete-btn {
+    background: none;
+    border: 1px solid #e53e3e;
+    color: #e53e3e;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+.delete-btn:hover {
+    background-color: #e53e3e;
+    color: white;
+}

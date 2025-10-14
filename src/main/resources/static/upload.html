@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Summarizer AI</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <a href="history.html" class="history-button">View History</a>
+    <div class="card">
+        <h1>Meeting Summarizer AI </h1>
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="file-upload" class="file-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span id="file-name-text">Drag & Drop or Click to Upload</span>
+            </label>
+            <input id="file-upload" type="file" name="file" required>
+            <input id="submit-button" type="submit" value="Upload and Summarize">
+        </form>
+        <div id="summary-result" class="summary-container"></div>
+    </div>
+
+    <script>
+        // If the page is served from a different origin (e.g. Live Server on :5500),
+        // route API calls to the backend on port 8080. If already served from the
+        // backend (http://localhost:8080), use relative paths.
+        const backendOrigin = 'http://localhost:8080';
+        const baseUrl = (location.origin === backendOrigin) ? '' : backendOrigin;
+
+        // Debug: log origins so we can see where fetch requests will be routed.
+        console.log('DEBUG: location.origin=', location.origin, 'backendOrigin=', backendOrigin, 'baseUrl=', baseUrl);
+
+        // Add a small debug badge to the page so it's obvious which backend origin is used.
+        (function showDebugBanner() {
+            try {
+                const badge = document.createElement('div');
+                badge.id = 'debug-base-url';
+                badge.style.position = 'fixed';
+                badge.style.bottom = '8px';
+                badge.style.right = '8px';
+                badge.style.background = '#fff8';
+                badge.style.border = '1px solid #ccc';
+                badge.style.padding = '6px 8px';
+                badge.style.fontSize = '12px';
+                badge.style.zIndex = '9999';
+                badge.style.backdropFilter = 'blur(4px)';
+                badge.textContent = `API base: ${baseUrl || '(same origin)'} (origin: ${location.origin})`;
+                document.body.appendChild(badge);
+            } catch (e) {
+                console.log('DEBUG: could not add banner', e);
+            }
+        })();
+
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-upload');
+        const fileNameText = document.getElementById('file-name-text');
+        const summaryResultDiv = document.getElementById('summary-result');
+        const submitButton = document.getElementById('submit-button');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameText.textContent = fileInput.files[0].name;
+            } else {
+                fileNameText.textContent = 'Drag & Drop or Click to Upload';
+            }
+        });
+
+        uploadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Client-side validation to avoid "An invalid form control ... is not focusable".
+            if (!fileInput.files || fileInput.files.length === 0) {
+                fileNameText.textContent = 'Please choose a file to upload.';
+                fileInput.focus();
+                return;
+            }
+
+            submitButton.disabled = true;
+            summaryResultDiv.innerHTML = '<div class="loader"></div><p>Processing... This may take a moment.</p>';
+            summaryResultDiv.classList.add('visible');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`${baseUrl}/api/meetings/summarize`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+
+                const markdownSummary = await response.text();
+                summaryResultDiv.innerHTML = marked.parse(markdownSummary);
+
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                summaryResultDiv.innerHTML = `<p style="color: #e53e3e;"><strong>Upload Failed:</strong> ${error.message}</p>`;
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
