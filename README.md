@@ -2,8 +2,6 @@
 
 A full-stack Java application that transcribes audio from meetings, uses Google's Gemini AI to generate a summary, and stores the results for future viewing.
 
-**Live Demo:** [Link to your deployed Render app will go here]
-
 ---
 
 ## ## Features
