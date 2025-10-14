@@ -2,6 +2,8 @@ package com.example.meetingsummarizer.service;
 
 import com.example.meetingsummarizer.dto.GeminiRequest;
 import com.example.meetingsummarizer.dto.GeminiResponse;
+import com.example.meetingsummarizer.model.Meeting;
+import com.example.meetingsummarizer.repository.MeetingRepository;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
@@ -17,28 +19,48 @@ import java.util.List;
 public class MeetingService {
 
     private final WebClient webClient;
+    private final MeetingRepository meetingRepository;
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
     @Autowired
-    public MeetingService(WebClient.Builder webClientBuilder) {
+    public MeetingService(WebClient.Builder webClientBuilder, MeetingRepository meetingRepository) {
         this.webClient = webClientBuilder.build();
+        this.meetingRepository = meetingRepository;
     }
 
     public String processMeetingFile(MultipartFile file) throws Exception {
-        // Step 1: Transcribe the audio file using Google Speech-to-Text
+        // Step 1: Transcribe the audio
         System.out.println("Calling Google Speech-to-Text API (long-running)...");
         String transcript = transcribeAudio(file);
         System.out.println("Transcription successful.");
-        System.out.println("Transcript: " + transcript);
 
-        // Step 2: Summarize the transcript using Google Gemini
+        // Step 2: Summarize the transcript
         System.out.println("Calling Gemini API to summarize the transcript...");
         String summary = summarizeTranscript(transcript);
         System.out.println("Summarization successful.");
 
+        // Step 3: Save the results to the database
+        Meeting meeting = new Meeting();
+        meeting.setOriginalFileName(file.getOriginalFilename());
+        meeting.setTranscript(transcript);
+        meeting.setSummary(summary);
+        meetingRepository.save(meeting);
+        System.out.println("Meeting summary saved to the database.");
+
         return summary;
+    }
+
+    // Method to fetch all saved meetings
+    public List<Meeting> findAllMeetings() {
+        return meetingRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    // Method to find a single meeting by its ID
+    public Meeting findMeetingById(Long id) {
+        return meetingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + id));
     }
 
     private String transcribeAudio(MultipartFile audioFile) throws Exception {
@@ -46,18 +68,16 @@ public class MeetingService {
             ByteString audioBytes = ByteString.copyFrom(audioFile.getBytes());
 
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.MP3) // Change if your audio format is different
-                    .setSampleRateHertz(16000) // Change if your audio sample rate is different
+                    .setEncoding(RecognitionConfig.AudioEncoding.MP3)
+                    .setSampleRateHertz(16000)
                     .setLanguageCode("en-US")
                     .build();
 
             RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(audioBytes).build();
 
-            // Use the asynchronous method for files larger than 1 minute
             OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =
                     speechClient.longRunningRecognizeAsync(config, audio);
 
-            // Wait for the operation to complete
             LongRunningRecognizeResponse result = response.get();
 
             StringBuilder transcript = new StringBuilder();
@@ -72,18 +92,19 @@ public class MeetingService {
         if (transcript == null || transcript.isBlank()) {
             return "Could not generate a summary because the transcript was empty.";
         }
-        
+
         String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + geminiApiKey;
-        String prompt = "Summarize the following transcript. " +
-                        "Format the output as Markdown. " +
-                        "Use a '## Key Decisions' heading and a '## Action Items' heading. " +
-                        "Use bullet points for each list item. " +
+        String prompt = "First, provide a brief one-paragraph summary of the following meeting transcript. " +
+                        "Then, list the key decisions and action items. " +
+                        "Format the entire output as Markdown. " +
+                        "Use the headings '## Summary', '## Key Decisions', and '## Action Items'. " +
+                        "Use bullet points for the decision and action item lists. " +
                         "Transcript:\n\n" + transcript;
-        
+
         GeminiRequest.Part part = new GeminiRequest.Part(prompt);
         GeminiRequest.Content content = new GeminiRequest.Content(List.of(part));
         GeminiRequest requestBody = new GeminiRequest(List.of(content));
-        
+
         try {
             GeminiResponse response = webClient.post()
                     .uri(apiUrl)
